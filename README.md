@@ -1,5 +1,11 @@
 # jenkins-docker-plugin-integration
 
+brew install jenkins-lts 
+brew services start jenkins-lts
+brew services stop jenkins-lts
+
+http://localhost:8080/
+
 Install Docker Plugin in Jenkins:
 
 Go to Manage Jenkins > Manage Plugins.
