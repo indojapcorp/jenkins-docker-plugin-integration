@@ -1,0 +1,61 @@
+pipeline {
+    agent any
+    environment {
+        DOCKER_IMAGE = "jenkins-docker-plugin-integration"
+        DOCKER_TAG = "latest"
+        DOCKER_REGISTRY = "localhost:5000" // Optional if using a registry
+        GIT_REPO = "https://github.com/indojapcorp/jenkins-docker-plugin-integration.git"
+        PATH = "${env.PATH}:/usr/local/bin"  // This works for adding to the PATH
+    }
+    stages {
+        stage('Clone Repository') {
+            steps {
+                git branch: 'main', url: "${GIT_REPO}"
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                script {
+                    // Build the Docker image
+                    docker.build("${DOCKER_IMAGE}:${DOCKER_TAG}")
+                }
+            }
+        }
+
+        stage('Test Docker Container') {
+            steps {
+                script {
+                    // Run the Docker container to ensure it works correctly
+                    def app = docker.image("${DOCKER_IMAGE}:${DOCKER_TAG}")
+                    app.run('-d -p 9080:80')
+                    // Perform some tests here, e.g., check if website is up
+                    sleep(5)
+                    sh "curl http://localhost:9080 | grep 'Welcome to My Static Website'"
+                }
+            }
+        }
+
+        stage('Deploy Docker Container') {
+            steps {
+                script {
+                    // Deploy the Docker container to a server (localhost in this case)
+                    def app = docker.image("${DOCKER_IMAGE}:${DOCKER_TAG}")
+                    app.run('-d -p 80:80')
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            cleanWs() // Clean workspace after the build
+        }
+        success {
+            echo 'Deployment was successful!'
+        }
+        failure {
+            echo 'Deployment failed!'
+        }
+    }
+}
